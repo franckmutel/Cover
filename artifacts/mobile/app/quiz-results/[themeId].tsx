@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
-import { MAX_SCORE_PER_THEME, THEMES, getRecommendation } from '@/data/questions';
+import { MAX_QUIZ_SCORE_PER_THEME, THEMES, getRecommendation } from '@/data/questions';
 import { ProgressBar } from '@/components/ProgressBar';
 import * as Haptics from 'expo-haptics';
 
@@ -30,7 +30,7 @@ export default function ThemeQuizResultsScreen() {
 
   const theme = THEMES.find((t) => t.id === Number(themeId));
   const scoreNum = Number(score ?? '0');
-  const percentage = theme ? Math.round((scoreNum / MAX_SCORE_PER_THEME) * 100) : 0;
+  const percentage = theme ? Math.round((scoreNum / MAX_QUIZ_SCORE_PER_THEME) * 100) : 0;
   const recommendation = theme ? getRecommendation(theme.id, percentage) : null;
   const tier = SCORE_THRESHOLDS.find((t) => percentage < t.max) ?? SCORE_THRESHOLDS[2];
 
@@ -139,7 +139,7 @@ export default function ThemeQuizResultsScreen() {
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>Score détaillé</Text>
               <Text style={[styles.scoreRaw, { color: theme.color }]}>
-                {scoreNum} / {MAX_SCORE_PER_THEME} pts
+                {scoreNum} / {MAX_QUIZ_SCORE_PER_THEME} pts
               </Text>
             </View>
             <ProgressBar progress={percentage / 100} color={theme.color} height={12} borderRadius={6} />

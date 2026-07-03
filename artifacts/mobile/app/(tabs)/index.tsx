@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
               Choisissez un thème
             </Text>
             <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-              6 questions · ~3 minutes
+              30 questions · ~15 minutes
             </Text>
           </View>
 
@@ -93,7 +93,7 @@ export default function WelcomeScreen() {
                 <View style={styles.themeInfo}>
                   <Text style={[styles.themeName, { color: colors.foreground }]}>{theme.name}</Text>
                   <Text style={[styles.themeDesc, { color: colors.mutedForeground }]}>
-                    6 questions
+                    30 questions
                   </Text>
                 </View>
 

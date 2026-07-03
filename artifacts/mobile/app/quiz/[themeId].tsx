@@ -130,7 +130,7 @@ export default function ThemeQuizScreen() {
   }
 
   // ── Quiz helpers ───────────────────────────────────────────────
-  const questions = theme.questions;
+  const questions = theme.quizQuestions;
   const totalQ = questions.length;
   const currentQuestion = questions[currentIndex];
   const currentAnswer = answers[currentIndex];
