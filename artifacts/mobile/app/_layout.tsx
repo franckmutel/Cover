@@ -27,6 +27,8 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="survey" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="results" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="quiz/[themeId]" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="quiz-results/[themeId]" options={{ headerShown: false, animation: 'fade' }} />
       </Stack>
     </SurveyProvider>
   );
