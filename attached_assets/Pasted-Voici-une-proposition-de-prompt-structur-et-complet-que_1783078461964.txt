@@ -1,0 +1,28 @@
+Voici une proposition de prompt structuré et complet que vous pouvez utiliser dans Replit (via leur fonctionnalité "Replit Agent" ou pour générer une base de code avec le LLM intégré) pour créer votre application de sondage.
+​Ce prompt est conçu pour être modulaire afin que vous puissiez l'adapter aux différents thèmes illustrés dans image.png, 1000084452.jpg, 1000084374.jpg, 1000084372.jpg, 1000084368.jpg, 1000084363.jpg, 1000084359.jpg, 1000084353.jpg, 1000084355.jpg, et 1000084357.jpg.
+​Prompt à copier-coller dans Replit
+​"Agis comme un développeur expert en React et Node.js. Je souhaite créer une application web interactive de diagnostic/sondage dynamique.
+​Spécifications techniques :
+​Frontend : React avec Tailwind CSS pour un design moderne, épuré et responsive (mobile-first).
+​Backend : Une API Node.js simple pour gérer les données.
+​Structure : L'application doit permettre de choisir parmi différents thèmes (ex: parentalité, relations professionnelles, adoption d'un animal).
+​Fonctionnalités requises :
+​Gestion des questions : L'application doit charger un questionnaire composé de 30 questions réparties équitablement sur 5 thématiques différentes (6 questions par thème).
+​Parcours utilisateur :
+​Une page d'accueil accueillante avec un bouton 'Commencer le diagnostic'.
+​Un système de progression étape par étape (une question à la fois ou par bloc thématique).
+​Logique de calcul :
+​À la fin, calculer un score en pourcentage pour chaque thématique.
+​Générer des recommandations personnalisées basées sur ces pourcentages (ex: si le score est < 50%, donner des conseils spécifiques d'amélioration).
+​Interface :
+​Utilise des éléments visuels cohérents avec une esthétique 'bien-être/coaching'.
+​Prévois des composants réutilisables pour les boutons et les barres de progression.
+​Livrables attendus :
+​Un fichier questions.json qui structure les 30 questions par thèmes.
+​Le code complet du frontend et du backend.
+​Une fonction de calcul des résultats qui affiche un tableau de bord clair avec des graphiques simples (ou des barres de progression colorées) pour les 5 thèmes."
+​Conseils pour personnaliser votre projet :
+​Adaptabilité : Comme vous avez plusieurs thèmes (papa, maman, collègue, animal), le fichier questions.json permettra de changer facilement le contenu sans toucher au code principal.
+​Design : Vous pouvez intégrer les images comme 1000084452.jpg (pour la parentalité) ou 1000084359.jpg (pour le milieu professionnel) en tant qu'images de fond ou en-tête pour chaque module afin de rendre l'expérience très immersive.
+​Recommandations : Si vous voulez que les recommandations soient "intelligentes", demandez à Replit d'utiliser une petite fonction JavaScript qui compare le score final de l'utilisateur à des paliers (0-40%, 41-70%, 71-100%) pour afficher un conseil différent pour chaque catégorie.
+​Souhaitez-vous que je vous aide à rédiger une structure d'exemple pour le fichier questions.json afin de mieux organiser vos 30 questions ?
