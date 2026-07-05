@@ -17,56 +17,44 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
-import { THEMES } from '@/data/questions';
-import type { QuizCover, QuizCoversMap } from '@/data/quizCovers';
+import { getSpecificQuiz } from '@/data/specificQuizzes';
 import { ProgressBar } from '@/components/ProgressBar';
 import { QuestionCard } from '@/components/QuestionCard';
 import * as Haptics from 'expo-haptics';
 
-// All require() calls must live in the component file so Metro resolves them statically.
-const QUIZ_COVERS: QuizCoversMap = {
-  // Bien-être Personnel — "Suis-je prêt(e) à être parent ?"
+// ─── Cover images — require() must stay in a component file (Metro static analysis) ───
+// Map: quizId → array of cover images
+const QUIZ_COVERS: Record<number, { image: any; alt: string }[]> = {
   1: [
     { image: require('@/assets/images/quiz-covers/cover1_1.jpg'), alt: 'Suis-je prête à être mère ?' },
-    { image: require('@/assets/images/quiz-covers/cover1_2.jpg'), alt: 'Suis-je prêt à être père ?' },
-    { image: require('@/assets/images/quiz-covers/cover1_3.jpg'), alt: 'Sommes-nous prêts à être pères ?' },
-    { image: require('@/assets/images/quiz-covers/cover1_4.jpg'), alt: 'Sommes-nous prêtes à être mères ?' },
     { image: require('@/assets/images/quiz-covers/cover1_5.jpg'), alt: 'Suis-je prête à être mère ?' },
   ],
-  // Relations Sociales — "Suis-je un(e) bon(ne) parent(e) ?"
-  2: [
-    { image: require('@/assets/images/quiz-covers/cover2_1.jpg'), alt: 'Suis-je une bonne maman ?' },
-    { image: require('@/assets/images/quiz-covers/cover2_2.jpg'), alt: 'Suis-je un bon papa ?' },
-  ],
-  // Vie Professionnelle — "Suis-je un(e) bon(ne) collègue ?"
-  3: [
-    { image: require('@/assets/images/quiz-covers/cover3_1.jpg'), alt: 'Suis-je un(e) bon(ne) collègue ?' },
-    { image: require('@/assets/images/quiz-covers/cover3_2.jpg'), alt: 'Suis-je un bon collègue ?' },
-    { image: require('@/assets/images/quiz-covers/cover3_3.jpg'), alt: 'Suis-je une bonne collègue ?' },
-  ],
-  // Santé & Équilibre — "Sommes-nous prêts à avoir un animal ?"
-  4: [
-    { image: require('@/assets/images/quiz-covers/cover4_1.jpg'), alt: 'Sommes-nous prêts à avoir un chien ?' },
-    { image: require('@/assets/images/quiz-covers/cover4_2.jpg'), alt: 'Sommes-nous prêts à avoir un chat ?' },
-  ],
-  // Développement Personnel — "Suis-je prêt(e) à transmettre mes valeurs ?"
-  5: [
-    { image: require('@/assets/images/quiz-covers/cover5_1.jpg'), alt: 'Suis-je prêt(e) à transmettre mes valeurs ?' },
-  ],
+  2: [{ image: require('@/assets/images/quiz-covers/cover1_2.jpg'), alt: 'Suis-je prêt à être père ?' }],
+  3: [{ image: require('@/assets/images/quiz-covers/cover1_3.jpg'), alt: 'Sommes-nous prêts à être pères ?' }],
+  4: [{ image: require('@/assets/images/quiz-covers/cover1_4.jpg'), alt: 'Sommes-nous prêtes à être mères ?' }],
+  5: [{ image: require('@/assets/images/quiz-covers/cover2_1.jpg'), alt: 'Suis-je une bonne maman ?' }],
+  6: [{ image: require('@/assets/images/quiz-covers/cover2_2.jpg'), alt: 'Suis-je un bon papa ?' }],
+  7: [{ image: require('@/assets/images/quiz-covers/cover3_1.jpg'), alt: 'Suis-je un(e) bon(ne) collègue ?' }],
+  8: [{ image: require('@/assets/images/quiz-covers/cover3_2.jpg'), alt: 'Suis-je un(e) bon(ne) collègue ?' }],
+  9: [{ image: require('@/assets/images/quiz-covers/cover3_3.jpg'), alt: 'Suis-je un(e) bon(ne) collègue ?' }],
+  10: [{ image: require('@/assets/images/quiz-covers/cover4_1.jpg'), alt: 'Sommes-nous prêts à avoir un chien ?' }],
+  11: [{ image: require('@/assets/images/quiz-covers/cover4_2.jpg'), alt: 'Sommes-nous prêts à avoir un chat ?' }],
+  12: [{ image: require('@/assets/images/quiz-covers/cover5_1.jpg'), alt: 'Suis-je prêt(e) à transmettre mes valeurs ?' }],
 };
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 type Phase = 'cover' | 'quiz';
 
-export default function ThemeQuizScreen() {
+export default function SpecificQuizScreen() {
   const { themeId } = useLocalSearchParams<{ themeId: string }>();
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const theme = THEMES.find((t) => t.id === Number(themeId));
-  const covers = QUIZ_COVERS[Number(themeId)] ?? [];
+  const quizId = Number(themeId);
+  const quiz = getSpecificQuiz(quizId);
+  const covers = QUIZ_COVERS[quizId] ?? [];
 
   // ── Phase state ──────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('cover');
@@ -98,13 +86,12 @@ export default function ThemeQuizScreen() {
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (phase === 'quiz') {
-        // Return to cover instead of exiting the screen
         setPhase('cover');
         setAnswers({});
         setCurrentIndex(0);
-        return true; // intercept
+        return true;
       }
-      return false; // let router handle it (go back to home)
+      return false;
     });
     return () => sub.remove();
   }, [phase]);
@@ -121,16 +108,16 @@ export default function ThemeQuizScreen() {
   const topPadding = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPadding = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  if (!theme) {
+  if (!quiz) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.foreground }}>Thème introuvable</Text>
+        <Text style={{ color: colors.foreground }}>Quiz introuvable</Text>
       </View>
     );
   }
 
   // ── Quiz helpers ───────────────────────────────────────────────
-  const questions = theme.quizQuestions;
+  const questions = quiz.questions;
   const totalQ = questions.length;
   const currentQuestion = questions[currentIndex];
   const currentAnswer = answers[currentIndex];
@@ -153,7 +140,7 @@ export default function ThemeQuizScreen() {
       );
       router.replace({
         pathname: '/quiz-results/[themeId]',
-        params: { themeId: String(theme.id), score: String(totalScore) },
+        params: { themeId: String(quiz.id), score: String(totalScore) },
       });
     } else {
       setCurrentIndex((i) => i + 1);
@@ -187,19 +174,14 @@ export default function ThemeQuizScreen() {
             onViewableItemsChanged={onViewableItemsChanged.current}
             viewabilityConfig={viewabilityConfig.current}
             renderItem={({ item }) => (
-              <Image
-                source={item.image}
-                style={styles.coverImage}
-                resizeMode="cover"
-              />
+              <Image source={item.image} style={styles.coverImage} resizeMode="cover" />
             )}
           />
         ) : (
-          // Fallback coloured background if no images
-          <View style={[styles.coverFallback, { backgroundColor: theme.color }]} />
+          <View style={[styles.coverFallback, { backgroundColor: quiz.color }]} />
         )}
 
-        {/* Dark gradient overlay at top + bottom */}
+        {/* Dark gradient overlays */}
         <View style={[styles.overlayTop, { pointerEvents: 'none' }]} />
         <View style={[styles.overlayBottom, { pointerEvents: 'none' }]} />
 
@@ -214,21 +196,24 @@ export default function ThemeQuizScreen() {
 
         {/* Bottom card */}
         <View style={[styles.coverCard, { paddingBottom: bottomPadding + 16 }]}>
-          {/* Theme badge */}
-          <View style={[styles.themeBadge, { backgroundColor: theme.color + 'EE' }]}>
-            <Ionicons
-              name={theme.iconName as keyof typeof Ionicons.glyphMap}
-              size={14}
-              color="#fff"
-            />
-            <Text style={styles.themeBadgeText}>{theme.name}</Text>
+          {/* Quiz badge */}
+          <View style={[styles.quizBadge, { backgroundColor: quiz.color + 'EE' }]}>
+            <Ionicons name={quiz.iconName as keyof typeof Ionicons.glyphMap} size={14} color="#fff" />
+            <Text style={styles.quizBadgeText}>{quiz.category}</Text>
           </View>
 
-          {/* Quiz info */}
-          <Text style={styles.coverTitle}>Quiz · {totalQ} questions</Text>
-          <Text style={styles.coverSub}>~{Math.ceil(totalQ * 0.5)} minutes · Résultats personnalisés</Text>
+          {/* Quiz title */}
+          <Text style={styles.coverTitle}>{quiz.title}</Text>
+          {quiz.subtitle ? (
+            <Text style={styles.coverSubtitle}>{quiz.subtitle}</Text>
+          ) : null}
 
-          {/* Pagination dots (only if more than 1 image) */}
+          {/* Info */}
+          <Text style={styles.coverInfo}>
+            30 questions · ~15 minutes · Analyse personnalisée
+          </Text>
+
+          {/* Pagination dots (only if multiple images) */}
           {covers.length > 1 && (
             <View style={styles.dots}>
               {covers.map((_, i) => (
@@ -250,7 +235,7 @@ export default function ThemeQuizScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.coverCta,
-              { backgroundColor: theme.color, opacity: pressed ? 0.88 : 1 },
+              { backgroundColor: quiz.color, opacity: pressed ? 0.88 : 1 },
             ]}
             onPress={switchToQuiz}
           >
@@ -273,7 +258,7 @@ export default function ThemeQuizScreen() {
           styles.header,
           {
             paddingTop: topPadding + 6,
-            backgroundColor: theme.color,
+            backgroundColor: quiz.color,
           },
         ]}
       >
@@ -292,11 +277,11 @@ export default function ThemeQuizScreen() {
         <View style={styles.headerCenter}>
           <View style={styles.headerTitleRow}>
             <Ionicons
-              name={theme.iconName as keyof typeof Ionicons.glyphMap}
-              size={16}
+              name={quiz.iconName as keyof typeof Ionicons.glyphMap}
+              size={14}
               color="rgba(255,255,255,0.9)"
             />
-            <Text style={styles.headerTheme}>{theme.name}</Text>
+            <Text style={styles.headerQuiz} numberOfLines={1}>{quiz.title}</Text>
           </View>
           <Text style={styles.headerCount}>
             Question {currentIndex + 1} sur {totalQ}
@@ -309,12 +294,12 @@ export default function ThemeQuizScreen() {
       </View>
 
       {/* Progress bar */}
-      <View style={[styles.progressBar, { backgroundColor: theme.color + '30' }]}>
+      <View style={{ backgroundColor: quiz.color + '30' }}>
         <ProgressBar
           progress={progress}
-          color={theme.color}
+          color={quiz.color}
           height={4}
-          backgroundColor={theme.color + '20'}
+          backgroundColor={quiz.color + '20'}
         />
       </View>
 
@@ -329,7 +314,7 @@ export default function ThemeQuizScreen() {
               questionText={currentQuestion.text}
               selectedScore={currentAnswer}
               onSelectScore={handleSelectScore}
-              themeColor={theme.color}
+              themeColor={quiz.color}
             />
           )}
         </Animated.View>
@@ -365,7 +350,7 @@ export default function ThemeQuizScreen() {
           style={({ pressed }) => [
             styles.navNext,
             {
-              backgroundColor: canGoNext ? theme.color : colors.muted,
+              backgroundColor: canGoNext ? quiz.color : colors.muted,
               opacity: pressed ? 0.85 : 1,
               transform: [{ scale: pressed ? 0.97 : 1 }],
             },
@@ -379,7 +364,7 @@ export default function ThemeQuizScreen() {
               { color: canGoNext ? '#fff' : colors.mutedForeground },
             ]}
           >
-            {isLast ? 'Voir mes résultats' : 'Question suivante'}
+            {isLast ? 'Voir mon analyse' : 'Question suivante'}
           </Text>
           <Ionicons
             name={isLast ? 'checkmark-circle' : 'arrow-forward'}
@@ -396,198 +381,91 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
 
   // ── Cover ──────────────────────────────────────────────────────
-  coverImage: {
-    width: SCREEN_W,
-    height: SCREEN_H,
-  },
-  coverFallback: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  coverImage: { width: SCREEN_W, height: SCREEN_H },
+  coverFallback: { ...StyleSheet.absoluteFillObject },
   overlayTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 140,
+    position: 'absolute', top: 0, left: 0, right: 0, height: 160,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   overlayBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 340,
-    backgroundColor: 'rgba(0,0,0,0.62)',
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: 380,
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   coverBackBtn: {
-    position: 'absolute',
-    left: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', left: 16, width: 38, height: 38, borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center',
   },
   coverCard: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    gap: 8,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 24, paddingTop: 20, gap: 8,
   },
-  themeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 4,
+  quizBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 4,
   },
-  themeBadgeText: {
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-    letterSpacing: 0.3,
+  quizBadgeText: {
+    fontSize: 12, fontFamily: 'Inter_700Bold', color: '#fff', letterSpacing: 0.3,
   },
   coverTitle: {
-    fontSize: 26,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-    lineHeight: 32,
+    fontSize: 24, fontFamily: 'Inter_700Bold', color: '#fff', lineHeight: 30,
   },
-  coverSub: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.72)',
-    marginBottom: 4,
+  coverSubtitle: {
+    fontSize: 14, fontFamily: 'Inter_600SemiBold', color: 'rgba(255,255,255,0.85)',
+    marginTop: -4,
   },
-  dots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginVertical: 6,
+  coverInfo: {
+    fontSize: 13, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.72)',
+    marginBottom: 2,
   },
-  dot: {
-    height: 7,
-    borderRadius: 4,
-  },
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 5, marginVertical: 4 },
+  dot: { height: 7, borderRadius: 4 },
   coverCta: {
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    borderRadius: 16, paddingVertical: 16, paddingHorizontal: 24,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    marginTop: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 10, elevation: 5,
   },
-  coverCtaText: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-    letterSpacing: 0.3,
-  },
+  coverCtaText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#fff', letterSpacing: 0.3 },
 
   // ── Quiz ───────────────────────────────────────────────────────
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 10,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingBottom: 14, gap: 10,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.20)', alignItems: 'center', justifyContent: 'center',
   },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 3,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerTheme: {
-    fontSize: 15,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
+  headerCenter: { flex: 1, gap: 2 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerQuiz: {
+    fontSize: 13, fontFamily: 'Inter_600SemiBold',
+    color: 'rgba(255,255,255,0.92)', flex: 1,
   },
   headerCount: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.70)',
   },
   scoreTag: {
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(0,0,0,0.20)', borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 5,
   },
   scoreTagText: {
-    fontSize: 12,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
+    fontSize: 12, fontFamily: 'Inter_700Bold', color: '#fff',
   },
-  progressBar: {
-    paddingHorizontal: 0,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 20,
-  },
+  content: { padding: 16, gap: 12 },
   navBar: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
+    flexDirection: 'row', gap: 10,
+    paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1,
   },
   navBack: {
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6, borderRadius: 14, paddingVertical: 14,
   },
-  navBackText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
+  navBackText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
   navNext: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
+    flex: 2, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14,
   },
-  navNextText: {
-    fontSize: 15,
-    fontFamily: 'Inter_700Bold',
-  },
+  navNextText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -12,21 +13,40 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useSurvey } from '@/context/SurveyContext';
-import { THEMES } from '@/data/questions';
+import { getQuizzesByCategory } from '@/data/specificQuizzes';
 import * as Haptics from 'expo-haptics';
 
+// Thumbnail images — require() calls must be in a component file for Metro.
+// Keys match quiz IDs from specificQuizzes.ts.
+const QUIZ_THUMBS: Record<number, any> = {
+  1:  require('@/assets/images/quiz-covers/cover1_1.jpg'),
+  2:  require('@/assets/images/quiz-covers/cover1_2.jpg'),
+  3:  require('@/assets/images/quiz-covers/cover1_3.jpg'),
+  4:  require('@/assets/images/quiz-covers/cover1_4.jpg'),
+  5:  require('@/assets/images/quiz-covers/cover2_1.jpg'),
+  6:  require('@/assets/images/quiz-covers/cover2_2.jpg'),
+  7:  require('@/assets/images/quiz-covers/cover3_1.jpg'),
+  8:  require('@/assets/images/quiz-covers/cover3_2.jpg'),
+  9:  require('@/assets/images/quiz-covers/cover3_3.jpg'),
+  10: require('@/assets/images/quiz-covers/cover4_1.jpg'),
+  11: require('@/assets/images/quiz-covers/cover4_2.jpg'),
+  12: require('@/assets/images/quiz-covers/cover5_1.jpg'),
+};
+
+const QUIZ_SECTIONS = getQuizzesByCategory();
+
 export default function WelcomeScreen() {
-  const colors = useColors();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const colors  = useColors();
+  const router  = useRouter();
+  const insets  = useSafeAreaInsets();
   const { resetSurvey } = useSurvey();
 
-  const topPadding = Platform.OS === 'web' ? 67 : insets.top;
+  const topPadding    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPadding = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  const handleThemeQuiz = (themeId: number) => {
+  const handleQuiz = (quizId: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({ pathname: '/quiz/[themeId]', params: { themeId: String(themeId) } });
+    router.push({ pathname: '/quiz/[themeId]', params: { themeId: String(quizId) } });
   };
 
   const handleFullDiagnostic = () => {
@@ -47,7 +67,7 @@ export default function WelcomeScreen() {
           <Ionicons name="pulse" size={28} color="#fff" />
         </View>
         <Text style={styles.heroTitle}>Mon Diagnostic</Text>
-        <Text style={styles.heroSub}>Évaluez votre bien-être{'\n'}un thème à la fois</Text>
+        <Text style={styles.heroSub}>Choisissez votre quiz{'\n'}et obtenez une analyse personnalisée</Text>
       </View>
 
       {/* White card */}
@@ -56,54 +76,70 @@ export default function WelcomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.cardContent, { paddingBottom: bottomPadding + 24 }]}
         >
-          {/* Theme quiz section */}
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Choisissez un thème
-            </Text>
-            <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-              30 questions · ~15 minutes
-            </Text>
-          </View>
+          {/* ── Quiz sections by category ── */}
+          {QUIZ_SECTIONS.map(({ category, quizzes }) => (
+            <View key={category} style={styles.section}>
+              {/* Section header */}
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{category}</Text>
+                <Text style={[styles.sectionMeta, { color: colors.mutedForeground }]}>
+                  {quizzes.length} quiz{quizzes.length > 1 ? 'zes' : ''}
+                </Text>
+              </View>
 
-          <View style={styles.themeList}>
-            {THEMES.map((theme) => (
-              <Pressable
-                key={theme.id}
-                style={({ pressed }) => [
-                  styles.themeCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: theme.color + '40',
-                    borderLeftColor: theme.color,
-                    opacity: pressed ? 0.85 : 1,
-                    transform: [{ scale: pressed ? 0.985 : 1 }],
-                  },
-                ]}
-                onPress={() => handleThemeQuiz(theme.id)}
-              >
-                <View style={[styles.themeIconWrap, { backgroundColor: theme.color + '18' }]}>
-                  <Ionicons
-                    name={theme.iconName as keyof typeof Ionicons.glyphMap}
-                    size={22}
-                    color={theme.color}
-                  />
-                </View>
+              {/* Quiz cards */}
+              {quizzes.map((quiz) => (
+                <Pressable
+                  key={quiz.id}
+                  style={({ pressed }) => [
+                    styles.quizCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      opacity: pressed ? 0.88 : 1,
+                      transform: [{ scale: pressed ? 0.985 : 1 }],
+                    },
+                  ]}
+                  onPress={() => handleQuiz(quiz.id)}
+                >
+                  {/* Thumbnail */}
+                  <View style={[styles.thumbWrap, { borderColor: quiz.color + '40' }]}>
+                    {QUIZ_THUMBS[quiz.id] ? (
+                      <Image
+                        source={QUIZ_THUMBS[quiz.id]}
+                        style={styles.thumb}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.thumbFallback, { backgroundColor: quiz.color + '20' }]}>
+                        <Ionicons
+                          name={quiz.iconName as keyof typeof Ionicons.glyphMap}
+                          size={22}
+                          color={quiz.color}
+                        />
+                      </View>
+                    )}
+                  </View>
 
-                <View style={styles.themeInfo}>
-                  <Text style={[styles.themeName, { color: colors.foreground }]}>{theme.name}</Text>
-                  <Text style={[styles.themeDesc, { color: colors.mutedForeground }]}>
-                    30 questions
-                  </Text>
-                </View>
+                  {/* Text */}
+                  <View style={styles.quizInfo}>
+                    <Text style={[styles.quizTitle, { color: colors.foreground }]}>{quiz.title}</Text>
+                    {quiz.subtitle ? (
+                      <Text style={[styles.quizSubtitle, { color: quiz.color }]}>{quiz.subtitle}</Text>
+                    ) : null}
+                    <Text style={[styles.quizMeta, { color: colors.mutedForeground }]}>
+                      30 questions · ~15 min
+                    </Text>
+                  </View>
 
-                <View style={[styles.startPill, { backgroundColor: theme.color + '18' }]}>
-                  <Text style={[styles.startPillText, { color: theme.color }]}>Démarrer</Text>
-                  <Ionicons name="chevron-forward" size={14} color={theme.color} />
-                </View>
-              </Pressable>
-            ))}
-          </View>
+                  {/* Arrow */}
+                  <View style={[styles.arrowWrap, { backgroundColor: quiz.color + '15' }]}>
+                    <Ionicons name="chevron-forward" size={16} color={quiz.color} />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          ))}
 
           {/* Divider */}
           <View style={styles.divider}>
@@ -152,180 +188,90 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   circleTopRight: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 32,
-    borderColor: 'rgba(255,255,255,0.10)',
+    position: 'absolute', top: -60, right: -60, width: 200, height: 200,
+    borderRadius: 100, borderWidth: 32, borderColor: 'rgba(255,255,255,0.10)',
   },
   circleBottomLeft: {
-    position: 'absolute',
-    bottom: 220,
-    left: -50,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 25,
-    borderColor: 'rgba(255,255,255,0.07)',
+    position: 'absolute', bottom: 220, left: -50, width: 160, height: 160,
+    borderRadius: 80, borderWidth: 25, borderColor: 'rgba(255,255,255,0.07)',
   },
   hero: {
-    alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingBottom: 28,
-    gap: 10,
+    alignItems: 'center', paddingHorizontal: 28, paddingBottom: 28, gap: 10,
   },
   logoCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 30,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-    letterSpacing: -0.5,
+    fontSize: 30, fontFamily: 'Inter_700Bold', color: '#fff', letterSpacing: -0.5,
   },
   heroSub: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.78)',
-    textAlign: 'center',
-    lineHeight: 21,
+    fontSize: 14, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.78)',
+    textAlign: 'center', lineHeight: 21,
   },
   card: {
-    flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: 'hidden',
+    flex: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08, shadowRadius: 16, elevation: 8,
   },
-  cardContent: {
-    padding: 20,
-    gap: 14,
-  },
+  cardContent: { paddingHorizontal: 20, paddingTop: 24, gap: 0 },
+
+  // ── Sections ─────────────────────────────────────────────────
+  section: { marginBottom: 20 },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingTop: 4,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 10,
   },
-  sectionTitle: {
-    fontSize: 19,
-    fontFamily: 'Inter_700Bold',
+  sectionTitle: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  sectionMeta: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+
+  // ── Quiz card ─────────────────────────────────────────────────
+  quizCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 16, borderWidth: 1, padding: 12, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  sectionSub: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-  },
-  themeList: {
-    gap: 10,
-  },
-  themeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderRadius: 16,
+  thumbWrap: {
+    width: 64, height: 64, borderRadius: 12, overflow: 'hidden',
     borderWidth: 1.5,
-    borderLeftWidth: 4,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
-  themeIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
+  thumb: { width: 64, height: 64 },
+  thumbFallback: {
+    width: 64, height: 64, alignItems: 'center', justifyContent: 'center',
   },
-  themeInfo: {
-    flex: 1,
-    gap: 2,
+  quizInfo: { flex: 1, gap: 2 },
+  quizTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', lineHeight: 18 },
+  quizSubtitle: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  quizMeta: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  arrowWrap: {
+    width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
   },
-  themeName: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  themeDesc: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  startPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  startPillText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-  },
+
+  // ── Divider ───────────────────────────────────────────────────
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginVertical: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 16,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
+  dividerLine: { flex: 1, height: 1 },
   dividerText: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-    paddingHorizontal: 4,
+    fontSize: 12, fontFamily: 'Inter_400Regular', paddingHorizontal: 8,
   },
+
+  // ── Full diagnostic ───────────────────────────────────────────
   fullBtn: {
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#3B7D6E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderRadius: 18, padding: 18, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15, shadowRadius: 8, elevation: 3,
   },
-  fullBtnLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  fullBtnTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-  },
-  fullBtnSub: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 1,
-  },
+  fullBtnLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  fullBtnTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },
+  fullBtnSub: { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.75)' },
+
+  // ── Info note ─────────────────────────────────────────────────
   infoBox: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 12,
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'flex-start',
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    borderRadius: 12, borderWidth: 1, padding: 14, marginTop: 12,
   },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    lineHeight: 18,
-  },
+  infoText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', lineHeight: 18 },
 });
